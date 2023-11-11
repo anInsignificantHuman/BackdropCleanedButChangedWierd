@@ -23,7 +23,6 @@ enum class Direction(val offset: Hex) {
 }
 
 class Offset(val x: Int, val y: Int) {
-
     init {
         if (y !in 0..10)              { throw IllegalArgumentException() }
         if (y % 2 == 0 && x !in 0..5) { throw IllegalArgumentException() }
@@ -39,37 +38,41 @@ class Offset(val x: Int, val y: Int) {
 
 }
 
-class Hex(val q: Int, val r: Int, val s: Int) {
-
+data class Hex(val q: Int, val r: Int, val s: Int) {
     init { if((q + r + s) != 0) { throw IllegalArgumentException() } }
 
-    override fun toString(): String { return "Hex(q=$q, r=$r, s=$s)" }
+    operator fun plus(b: Hex) = Hex(this.q + b.q, this.r + b.r, this.s + b.s)
 
-    private fun add(b: Hex): Hex { return Hex(this.q + b.q, this.r + b.r, this.s + b.s) }
+    operator fun unaryMinus() = Hex(-this.q, -this.r, -this.s)
 
-    private fun subtract(b: Hex): Hex { return Hex(this.q - b.q, this.r - b.r, this.s - b.s) }
+    operator fun minus(hex: Hex) = this + -hex
 
-    fun neighbor(direction: Direction): Hex { return add(direction.offset) }
-
-    private fun length(): Int { return ((abs(q) + abs(r) + abs(s)) / 2) }
+    fun neighbor(direction: Direction) = this + direction.offset
 
     fun cubeToOffset(): Offset {
         val col = abs(q + (r + (r and 1)) / 2)
         val row = abs(r)
+
         return Offset(col, row)
     }
 
-    fun areEqual(b: Hex): Boolean { return (this.q == b.q && this.r == b.r && this.s == b.s) }
+    override operator fun equals(other: Any?) =
+        if (other is Hex)
+            this.q == other.q && this.r == other.r && this.s == other.s
+        else false
 
     fun allNeighbors(): List<Hex> = Direction.values().map { neighbor(it) }
 
     companion object {
-
-        fun areNeighbors(a: Hex, b: Hex): Boolean = a.allNeighbors().any { it.areEqual(b) }
-
+        fun areNeighbors(a: Hex, b: Hex): Boolean = a.allNeighbors().any { it == b }
     }
 }
-class Pixel(val hex: Hex, val color: Color) {
+
+data class Pixel(val hex: Hex, val color: Color) {
+    override operator fun equals(other: Any?) =
+        if (other is Pixel)
+            this.hex == other.hex
+        else false
 
     override fun toString(): String {
         return "Pixel(hex=$hex, color=$color)"
@@ -81,11 +84,12 @@ class Pixel(val hex: Hex, val color: Color) {
 
     fun hasNeighborInList(pixels: List<Pixel>, direction: Direction): Boolean {
         val neighbor = hex.neighbor(direction)
-        return getNeighborsFromList(pixels).any { it.hex.areEqual(neighbor) }
+
+        return getNeighborsFromList(pixels).any { it.hex == neighbor }
     }
 
-    fun compareWithColor(pixel: Pixel): Boolean { return compareNoColor(pixel) && this.color == pixel.color }
+    private fun compareWithColor(pixel: Pixel): Boolean { return compareNoColor(pixel) && this.color == pixel.color }
 
-    fun compareNoColor(pixel: Pixel): Boolean { return this.hex.q == pixel.hex.q && this.hex.r == pixel.hex.r && this.hex.s == pixel.hex.s }
+    fun compareNoColor(pixel: Pixel) = pixel == this
 
 }
