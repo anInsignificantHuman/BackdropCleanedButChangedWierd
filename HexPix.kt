@@ -1,10 +1,10 @@
 import kotlin.math.abs
 
-enum class Color {
-    WHITE,
-    GREEN,
-    YELLOW,
-    PURPLE
+enum class Color(val tag: String) {
+    WHITE("W"),
+    GREEN("G"),
+    YELLOW("Y"),
+    PURPLE("P")
 }
 
 enum class Points(val amount: Int) {
